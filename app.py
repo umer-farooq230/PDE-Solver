@@ -113,37 +113,36 @@ if run:
 
 res = st.session_state.result
 
-col_left, col_right = st.columns([1, 2])
+st.subheader(f"{method if not res else res['method']} option — formula")
+latex, explanation = FORMULAS[method if not res else res["method"]]
+st.latex(latex)
+st.write(explanation)
 
-with col_left:
-    st.subheader(f"{method if not res else res['method']} option — formula")
-    latex, explanation = FORMULAS[method if not res else res["method"]]
-    st.latex(latex)
-    st.write(explanation)
-
-    st.subheader("Results")
-    if res:
+st.subheader("Results")
+if res:
+    m1, m2 = st.columns(2)
+    with m1:
         st.metric(f"PDE price ({res['solver_choice']})", f"{res['pde_price']:.4f}")
+    with m2:
         if res["analytical_price"] is not None:
             diff = res["pde_price"] - res["analytical_price"]
             st.metric("Analytical (closed-form)", f"{res['analytical_price']:.4f}",
                        delta=f"{diff:+.4f} vs PDE")
         else:
             st.caption("No closed-form benchmark for this option type.")
-    else:
-        st.info("Set parameters and click **Solve**.")
+else:
+    st.info("Set parameters and click **Solve**.")
 
-with col_right:
-    viz = PDEVisualizer()
-    if res:
-        st.subheader("Option Value Surface")
-        st.plotly_chart(viz.surface(res["S"], res["t"], res["V"]), use_container_width=True)
+viz = PDEVisualizer()
+if res:
+    st.subheader("Option Value Surface")
+    st.plotly_chart(viz.surface(res["S"], res["t"], res["V"]), use_container_width=True)
 
-        c1, c2 = st.columns(2)
-        with c1:
-            st.plotly_chart(viz.decay(res["t"], res["V"], res["idx"]), use_container_width=True)
-        with c2:
-            clean = {k: v for k, v in res["comparison"].items() if np.isfinite(v)}
-            st.plotly_chart(viz.comparison(clean), use_container_width=True)
-    else:
-        st.info("Results will appear here after solving.")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.plotly_chart(viz.decay(res["t"], res["V"], res["idx"]), use_container_width=True)
+    with c2:
+        clean = {k: v for k, v in res["comparison"].items() if np.isfinite(v)}
+        st.plotly_chart(viz.comparison(clean), use_container_width=True)
+else:
+    st.info("Visuals will appear here after solving.")
